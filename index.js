@@ -1,43 +1,95 @@
-const display = document.querySelector('#display');
-const buttons = document.querySelectorAll('button');
+let currentInput = '0';
+let previousInput = '';
+let operation = null;
+let resetScreen = false;
+
+const display = document.getElementById('display');
+const themeButtons = document.querySelectorAll('.theme-btn');
 
 
-buttons.forEach((item) => {
-    item.onclick = () => {
-        if (item.id === 'clear') {
-            display.innerText = '';
-        } else if (item.id === 'backspace') {
-            let string = display.innerText.toString();
-            display.innerText = string.substr(0, string.length - 1);
-        } else if (display.innerText !== '' && item.id === 'equal') {
-            try {
-                display.innerText = eval(display.innerText);
-            } catch (e) {
-                display.innerText = 'Erro';
-                setTimeout(() => (display.innerText = ''), 2000);
-            }
-        } else if (display.innerText === '' && item.id === 'equal') {
-            display.innerText = 'Empty!';
-            setTimeout(() => (display.innerText = ''), 2000);
-        } else {
-            display.innerText += item.id;
-        }
-    };
+function updateDisplay() {
+    display.textContent = currentInput;
+}
+
+function appendToDisplay(number) {
+    if (currentInput === '0' || resetScreen) {
+        currentInput = '';
+        resetScreen = false;
+    }
+    currentInput += number;
+    updateDisplay();
+}
+
+function clearDisplay() {
+    currentInput = '0';
+    previousInput = '';
+    operation = null;
+    updateDisplay();
+}
+
+function backspace() {
+    if (currentInput.length === 1) {
+        currentInput = '0';
+    } else {
+        currentInput = currentInput.slice(0, -1);
+    }
+    updateDisplay();
+}
+
+function setOperation(op) {
+    if (operation !== null) calculate();
+    previousInput = currentInput;
+    operation = op;
+    resetScreen = true;
+}
+
+function calculate() {
+    let result;
+    const prev = parseFloat(previousInput);
+    const current = parseFloat(currentInput);
+    
+    if (isNaN(prev) || isNaN(current)) return;
+    
+    switch (operation) {
+        case '+':
+            result = prev + current;
+            break;
+        case '-':
+            result = prev - current;
+            break;
+        case '*':
+            result = prev * current;
+            break;
+        case '/':
+            result = prev / current;
+            break;
+        case '%':
+            result = prev % current;
+            break;
+        default:
+            return;
+    }
+    
+    currentInput = result.toString();
+    operation = null;
+    updateDisplay();
+}
+
+
+document.querySelectorAll('.operator').forEach(button => {
+    if (button.textContent !== 'C' && button.textContent !== '←' && button.textContent !== '=') {
+        button.addEventListener('click', () => {
+            setOperation(button.textContent);
+        });
+    }
 });
 
 
-const themeToggleBtn = document.querySelector('.theme-toggler');
-const calculator = document.querySelector('.calculator');
-const themes = ['dark', 'blue', 'pink'];
-let currentThemeIndex = 0;
+themeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        document.body.className = button.dataset.theme;
+    });
+});
 
-themeToggleBtn.onclick = () => {
-    calculator.classList.remove(...themes); 
-    currentThemeIndex = (currentThemeIndex + 1) % (themes.length + 1); 
 
-    if (currentThemeIndex > 0) {
-        calculator.classList.add(themes[currentThemeIndex - 1]);
-    }
-
-    themeToggleBtn.classList.toggle('active');
-};
+updateDisplay();
